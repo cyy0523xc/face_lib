@@ -25,14 +25,13 @@ def path_detect(path):
         if fn.endswith(('jpg', 'jpeg', 'png')) is False:
             continue
         count += 1
-        if count > 10:
-            break
         image = cv2.imread(os.path.join(path, fn))
         locations = face_lib.detect(image, model='cnn')
         if len(locations) > 0:
             confidences = [i[0] for i in locations]
             encodings = face_lib.encode(image, locations)
             files.append((fn, locations, encodings, max(confidences)))
+            print(fn, encodings)
 
     print('===> ', time.time()-start, '  image count: ', count)
 

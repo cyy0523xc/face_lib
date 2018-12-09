@@ -4,6 +4,7 @@
 # Author: alex
 # Created Time: 2018年12月09日 星期日 11时19分47秒
 import numpy as np
+import cv2
 from cv2 import dnn
 import dlib
 from .resource import predictor_5_point_model_location, \
@@ -28,6 +29,10 @@ dnn_detector = None
 predictor = dlib.shape_predictor(predictor_68_point_model_location())
 
 face_encoder = dlib.face_recognition_model_v1(face_recognition_model_location())
+
+
+def imread(path):
+    return cv2.imread(path)
 
 
 def set_cnn_model(model_path: str = None):
