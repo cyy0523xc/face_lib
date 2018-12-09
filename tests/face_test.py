@@ -26,7 +26,7 @@ def path_detect(path):
             continue
         count += 1
         image = cv2.imread(os.path.join(path, fn))
-        locations = face_lib.detect(image, model='dnn')
+        locations = face_lib.detect(image, model='cnn')
         if len(locations) > 0:
             confidences = [i[0] for i in locations]
             encodings = face_lib.encode(image, locations)
@@ -57,7 +57,7 @@ def path_detect(path):
                 continue
             print('new face in ', fn, '   distance: ', distance)
             has_new_face = True
-            annotate.append('Person'+chr(ord('A')+len(faces)))
+            annotate.append('Face'+chr(ord('A')+len(faces)))
             faces.append(encoding)
 
         if has_new_face:

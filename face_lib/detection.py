@@ -53,17 +53,18 @@ def set_predictor(use_small=False):
         predictor = dlib.shape_predictor(predictor_68_point_model_location())
 
 
-def format_rect(rects, shape):
-    return rects
-
-
 def detect(img, model='dnn', number_of_times_to_upsample=1):
     if model == 'hog':
         rects = hog_detector(img, number_of_times_to_upsample)
-        return format_rect(rects)
+        rects = [[1, (r.left(), r.top()), (r.right(), r.bottom())]
+                 for r in rects]
+        return rects
     elif model == 'cnn':
         rects = cnn_detector(img, number_of_times_to_upsample)
-        return format_rect(rects)
+        print(rects)
+        rects = [[r.confidence, (r.left(), r.top()), (r.right(), r.bottom())]
+                 for r in rects]
+        return rects
 
     # 默认使用dnn
     cols = img.shape[1]
