@@ -19,7 +19,7 @@ test_requirements = [
 
 setup(
     name='face_lib',
-    version='0.1.0',
+    version='0.1.1',
     description="Simple to use face detection and recognition.",
     long_description=readme,
     author="Alex Cai",

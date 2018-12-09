@@ -16,7 +16,7 @@ from .resource import predictor_5_point_model_location, \
 class conf:
     in_width = 300
     in_height = 300
-    conf_threshold = 0.5
+    conf_threshold = 0.6
 
 
 # support algo
@@ -81,12 +81,13 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
         top = int(detections[0, 0, i, 4] * rows)
         right = int(detections[0, 0, i, 5] * cols)
         bottom = int(detections[0, 0, i, 6] * rows)
-        rects.append([(left, top), (right, bottom), confidence])
+        rects.append([confidence, (left, top), (right, bottom)])
 
     return rects
 
 
 def encode(img, rects, num_jitters=1):
+    rects = [_css_to_rect(rect) for rect in rects]
     landmarks = [predictor(img, rect) for rect in rects]
     return [np.array(face_encoder.compute_face_descriptor(img, landmark, num_jitters))
             for landmark in landmarks]
@@ -96,3 +97,8 @@ def distance(face_encodings, face_to_compare):
     if len(face_encodings) == 0:
         return np.empty((0))
     return np.linalg.norm(face_encodings - face_to_compare, axis=1)
+
+
+def _css_to_rect(css):
+    _, (left, top), (right, bottom) = css
+    return dlib.rectangle(left, top, right, bottom)
