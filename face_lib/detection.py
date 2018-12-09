@@ -61,7 +61,6 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
         return rects
     elif model == 'cnn':
         rects = cnn_detector(img, number_of_times_to_upsample)
-        print(rects)
         rects = [[r.confidence, (r.rect.left(), r.rect.top()),
                   (r.rect.right(), r.rect.bottom())]
                  for r in rects]
