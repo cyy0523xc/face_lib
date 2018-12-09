@@ -3,9 +3,14 @@
 # face detetion
 # Author: alex
 # Created Time: 2018年12月09日 星期日 11时19分47秒
-import cv2
+import numpy as np
 from cv2 import dnn
 import dlib
+from .resource import predictor_5_point_model_location, \
+    predictor_68_point_model_location, \
+    cnn_face_detector_model_location, \
+    face_recognition_model_location, \
+    dnn_prototxt_location, dnn_caffemodel_location
 
 
 class conf:
@@ -19,15 +24,33 @@ hog_detector = dlib.get_frontal_face_detector()
 cnn_detector = None
 dnn_detector = None
 
+#
+predictor = dlib.shape_predictor(predictor_68_point_model_location())
 
-def set_cnn_model(model_path: str):
+face_encoder = dlib.face_recognition_model_v1(face_recognition_model_location())
+
+
+def set_cnn_model(model_path: str = None):
     global cnn_detector
+    if model_path == None:
+        model_path = cnn_face_detector_model_location()
     cnn_detector = dlib.cnn_face_detection_model_v1(model_path)
 
 
-def set_dnn_model(model_path: str, prototxt_path: str):
+def set_dnn_model(model_path: str = None, prototxt_path: str = None):
     global dnn_detector
+    if model_path is None:
+        model_path = dnn_caffemodel_location()
+        prototxt_path = dnn_prototxt_location()
     dnn_detector = dnn.readNetFromCaffe(prototxt_path, model_path)
+
+
+def set_predictor(use_small=False):
+    global predictor
+    if use_small:
+        predictor = dlib.shape_predictor(predictor_5_point_model_location())
+    else:
+        predictor = dlib.shape_predictor(predictor_68_point_model_location())
 
 
 def format_rect(rects, shape):
@@ -61,3 +84,15 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
         rects.append([(left, top), (right, bottom), confidence])
 
     return rects
+
+
+def encode(img, rects, num_jitters=1):
+    landmarks = [predictor(img, rect) for rect in rects]
+    return [np.array(face_encoder.compute_face_descriptor(img, landmark, num_jitters))
+            for landmark in landmarks]
+
+
+def distance(face_encodings, face_to_compare):
+    if len(face_encodings) == 0:
+        return np.empty((0))
+    return np.linalg.norm(face_encodings - face_to_compare, axis=1)
