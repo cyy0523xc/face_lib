@@ -31,7 +31,7 @@ def path_detect(path):
             confidences = [i[0] for i in locations]
             encodings = face_lib.encode(image, locations)
             files.append((fn, locations, encodings, max(confidences)))
-            print(fn, encodings)
+            print(fn, locations)
 
     print('===> ', time.time()-start, '  image count: ', count)
 
