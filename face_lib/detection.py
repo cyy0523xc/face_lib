@@ -16,6 +16,7 @@ from .resource import predictor_5_point_model_location, \
 
 
 class conf:
+    """config for dnn"""
     in_width = 300
     in_height = 300
     threshold = 0.6    # 置信度阀值
@@ -65,9 +66,8 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
     """face detection, 人脸检测
     Args:
         img: 图片对象
-        model: 支持的识别算法:
-            hog:
-
+        model: 支持的识别算法: hog, cnn, haar, dnn
+    see: https://www.learnopencv.com/face-detection-opencv-dlib-and-deep-learning-c-python/
     """
     if model == 'hog':
         rects = hog_detector(img, number_of_times_to_upsample)
