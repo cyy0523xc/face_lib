@@ -9,12 +9,7 @@ import time
 import face_lib
 
 
-# init
-face_lib.set_cnn_model()
-face_lib.set_dnn_model()
-
-
-def path_detect(path):
+def path_detect(path, model_algo):
     filenames = sorted(os.listdir(path))
     files = []
     # face detection
@@ -26,7 +21,7 @@ def path_detect(path):
             continue
         count += 1
         image = cv2.imread(os.path.join(path, fn))
-        locations = face_lib.detect(image, model='cnn')
+        locations = face_lib.detect(image, model=model_algo)
         if len(locations) > 0:
             confidences = [i[0] for i in locations]
             encodings = face_lib.encode(image, locations)
@@ -92,4 +87,4 @@ def show_image(image, locations, annotate, wait=0):
 
 if __name__ == '__main__':
     import sys
-    path_detect(sys.argv[1])
+    path_detect(sys.argv[2], sys.argv[1])

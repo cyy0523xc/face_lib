@@ -11,17 +11,19 @@ from .resource import predictor_5_point_model_location, \
     predictor_68_point_model_location, \
     cnn_face_detector_model_location, \
     face_recognition_model_location, \
-    dnn_prototxt_location, dnn_caffemodel_location
+    dnn_prototxt_location, dnn_caffemodel_location, \
+    haarcascade_frontalface_location
 
 
 class conf:
     in_width = 300
     in_height = 300
-    conf_threshold = 0.6
+    threshold = 0.6    # 置信度阀值
 
 
 # support algo
 hog_detector = dlib.get_frontal_face_detector()
+haar_detector = cv2.CascadeClassifier(haarcascade_frontalface_location())
 cnn_detector = None
 dnn_detector = None
 
@@ -32,6 +34,7 @@ face_encoder = dlib.face_recognition_model_v1(face_recognition_model_location())
 
 
 def imread(path):
+    """读取image对象"""
     return cv2.imread(path)
 
 
@@ -59,29 +62,48 @@ def set_predictor(use_small=False):
 
 
 def detect(img, model='dnn', number_of_times_to_upsample=1):
+    """face detection, 人脸检测
+    Args:
+        img: 图片对象
+        model: 支持的识别算法:
+            hog:
+
+    """
     if model == 'hog':
         rects = hog_detector(img, number_of_times_to_upsample)
         rects = [[1, (r.left(), r.top()), (r.right(), r.bottom())]
                  for r in rects]
         return rects
+
     elif model == 'cnn':
+        if cnn_detector is None:
+            set_cnn_model()
         rects = cnn_detector(img, number_of_times_to_upsample)
         rects = [[r.confidence, (r.rect.left(), r.rect.top()),
                   (r.rect.right(), r.rect.bottom())]
                  for r in rects]
         return rects
 
+    elif model == 'haar':
+        rects = haar_detector.detectMultiScale(img)
+        rects = [[1, (x1, y1), (x1+w, y1+h)]
+                 for x1, y1, w, h in rects]
+        return rects
+
     # 默认使用dnn
+    if dnn_detector is None:
+        set_dnn_model()
+
     cols = img.shape[1]
     rows = img.shape[0]
     blob = dnn.blobFromImage(img, 1.0, (conf.in_width, conf.in_height),
-                             (104.0, 177.0, 123.0), False, False)
+                             (104, 177, 123), False, False)
     rects = []
     dnn_detector.setInput(blob)
     detections = dnn_detector.forward()
     for i in range(detections.shape[2]):
         confidence = detections[0, 0, i, 2]
-        if confidence < conf.conf_threshold:
+        if confidence < conf.threshold:
             continue
         left = int(detections[0, 0, i, 3] * cols)
         top = int(detections[0, 0, i, 4] * rows)

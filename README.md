@@ -5,6 +5,7 @@ face detection, face recognition and so on. 人脸检测，人脸识别等
 
 - hog
 - cnn
+- haar
 - dnn
 
 ## Install
