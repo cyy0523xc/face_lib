@@ -21,21 +21,22 @@ def path_detect(path, model_algo):
             continue
         count += 1
         image = cv2.imread(os.path.join(path, fn))
-        locations = face_lib.detect(image, model=model_algo)
+        locations, confidences = face_lib.detect(image, model=model_algo)
         if len(locations) > 0:
-            confidences = [i[0] for i in locations]
             encodings = face_lib.encode(image, locations)
-            files.append((fn, locations, encodings, max(confidences)))
-            print(fn, locations)
+            files.append((fn, locations, encodings,
+                          max(confidences), confidences))
+            print(fn, locations, confidences)
 
     print('===> ', time.time()-start, '  image count: ', count)
 
     # face recognition
+    new_confidence = 0.7 if model_algo == 'dnn' else 1
     print('face recognition...')
     files = sorted(files, key=lambda x: x[3], reverse=True)
     faces = []
     faces_files = []
-    for fn, locations, encodings, _ in files:
+    for fn, locations, encodings, _, confidences in files:
         if len(faces) == 0:
             faces = encodings
             annotate = ['Face'+chr(ord('A')+i) for i in range(len(faces))]
@@ -44,7 +45,9 @@ def path_detect(path, model_algo):
 
         has_new_face = False
         annotate = []
-        for encoding in encodings:
+        for encoding, confidence in zip(encodings, confidences):
+            if confidence < new_confidence:
+                continue
             distances = face_lib.distance(faces, encoding)
             distance = min(distances)
             face_index = distances.tolist().index(distance)
@@ -61,6 +64,7 @@ def path_detect(path, model_algo):
 
     # show images
     print('show images...')
+    print('total face image count:', len(faces_files))
     print('new face count: ', len(faces))
     for fn, locations, annotate in faces_files:
         print(fn, locations)
@@ -69,7 +73,7 @@ def path_detect(path, model_algo):
 
 
 def show_image(image, locations, annotate, wait=0):
-    for (_, (left, top), (right, bottom)), anno in zip(locations, annotate):
+    for ((left, top), (right, bottom)), anno in zip(locations, annotate):
         cv2.rectangle(image, (left, top),
                       (right, bottom), (0, 255, 0))
         labelSize, baseLine = cv2.getTextSize(anno, cv2.FONT_HERSHEY_SIMPLEX,

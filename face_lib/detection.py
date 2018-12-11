@@ -67,28 +67,31 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
     Args:
         img: 图片对象
         model: 支持的识别算法: hog, cnn, haar, dnn
+    Returns:
+        [[(left, top), (right, bottom)]]: 每个人脸的左上角坐标和右下角坐标
+        [confidence]: 每个人脸的置信度，注意该参数对于cnn和dnn才有意义
     see: https://www.learnopencv.com/face-detection-opencv-dlib-and-deep-learning-c-python/
     """
     if model == 'hog':
         rects = hog_detector(img, number_of_times_to_upsample)
-        rects = [[1, (r.left(), r.top()), (r.right(), r.bottom())]
+        rects = [[(r.left(), r.top()), (r.right(), r.bottom())]
                  for r in rects]
-        return rects
+        return rects, [1]*len(rects)
 
     elif model == 'cnn':
         if cnn_detector is None:
             set_cnn_model()
-        rects = cnn_detector(img, number_of_times_to_upsample)
-        rects = [[r.confidence, (r.rect.left(), r.rect.top()),
+        tmp_rects = cnn_detector(img, number_of_times_to_upsample)
+        rects = [[(r.rect.left(), r.rect.top()),
                   (r.rect.right(), r.rect.bottom())]
-                 for r in rects]
-        return rects
+                 for r in tmp_rects]
+        confidences = [r.confidence for r in tmp_rects]
+        return rects, confidences
 
     elif model == 'haar':
         rects = haar_detector.detectMultiScale(img)
-        rects = [[1, (x1, y1), (x1+w, y1+h)]
-                 for x1, y1, w, h in rects]
-        return rects
+        rects = [[(x1, y1), (x1+w, y1+h)] for x1, y1, w, h in rects]
+        return rects, [1]*len(rects)
 
     # 默认使用dnn
     if dnn_detector is None:
@@ -98,7 +101,7 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
     rows = img.shape[0]
     blob = dnn.blobFromImage(img, 1.0, (conf.in_width, conf.in_height),
                              (104, 177, 123), False, False)
-    rects = []
+    rects, confidences = [], []
     dnn_detector.setInput(blob)
     detections = dnn_detector.forward()
     for i in range(detections.shape[2]):
@@ -109,13 +112,14 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
         top = int(detections[0, 0, i, 4] * rows)
         right = int(detections[0, 0, i, 5] * cols)
         bottom = int(detections[0, 0, i, 6] * rows)
-        rects.append([confidence, (left, top), (right, bottom)])
+        rects.append([(left, top), (right, bottom)])
+        confidences.append(confidence)
 
-    return rects
+    return rects, confidences
 
 
 def encode(img, rects, num_jitters=1):
-    rects = [_css_to_rect(rect) for rect in rects]
+    rects = [format_dlib_rect(rect) for rect in rects]
     landmarks = [predictor(img, rect) for rect in rects]
     return [np.array(face_encoder.compute_face_descriptor(img, landmark, num_jitters))
             for landmark in landmarks]
@@ -127,6 +131,6 @@ def distance(face_encodings, face_to_compare):
     return np.linalg.norm(face_encodings - face_to_compare, axis=1)
 
 
-def _css_to_rect(css):
-    _, (left, top), (right, bottom) = css
+def format_dlib_rect(rect):
+    (left, top), (right, bottom) = rect
     return dlib.rectangle(left, top, right, bottom)
