@@ -30,12 +30,30 @@ def path_detect(path, model_algo):
 
     print('===> ', time.time()-start, '  image count: ', count)
 
+    # 判断前后图片的人脸距离
+    compare_before_face(files)
+    return
+
     # face recognition
-    new_confidence = 0.7 if model_algo == 'dnn' else 1
     print('face recognition...')
-    files = sorted(files, key=lambda x: x[3], reverse=True)
     faces = []
     faces_files = []
+
+    # find the best image
+    score = 0
+    for fn, locations, encodings, _, confidences in files:
+        tmp_score = sum(confidences)
+        if tmp_score > score:
+            score = tmp_score
+            faces = encodings
+            annotate = ['Face'+chr(ord('A')+i) for i in range(len(faces))]
+            faces_files = [(fn, locations, annotate)]
+
+    print('The best face: ', faces_files[0][0])
+    faces = [[f] for f in faces]
+
+    # files = sorted(files, key=lambda x: x[3], reverse=True)
+    new_confidence = 0.7 if model_algo == 'dnn' else 1
     for fn, locations, encodings, _, confidences in files:
         if len(faces) == 0:
             faces = encodings
@@ -46,18 +64,19 @@ def path_detect(path, model_algo):
         has_new_face = False
         annotate = []
         for encoding, confidence in zip(encodings, confidences):
-            if confidence < new_confidence:
+            distance, face_index = cal_distinces(faces, encoding)
+            print(fn, face_index, distance)
+            if distance < 0.50:   # 不是新face
+                if distance > 0.40:
+                    faces[face_index].append(encoding)
+                annotate.append('Face'+chr(ord('A')+face_index))
                 continue
-            distances = face_lib.distance(faces, encoding)
-            distance = min(distances)
-            face_index = distances.tolist().index(distance)
-            if distance < 0.55:   # 不是新face
-                annotate.append('Person'+chr(ord('A')+face_index))
+            if confidence < new_confidence:
                 continue
             print('new face in ', fn, '   distance: ', distance)
             has_new_face = True
             annotate.append('Face'+chr(ord('A')+len(faces)))
-            faces.append(encoding)
+            faces.append([encoding])
 
         if has_new_face:
             faces_files.append((fn, locations, annotate))
@@ -70,6 +89,39 @@ def path_detect(path, model_algo):
         print(fn, locations)
         image = cv2.imread(os.path.join(path, fn))
         show_image(image, locations, annotate)
+
+
+def cal_distinces(faces, face):
+    distances = []
+    for group in faces:
+        tmp_distances = face_lib.distance(group, face)
+        distance = min(tmp_distances)
+        distances.append(distance)
+
+    min_distance = min(distances)
+    return min_distance, distances.index(min_distance)
+
+
+def compare_before_face(files):
+    print('判断前后图片的人脸距离')
+    before_faces = files[0][2]
+    before_locs = files[0][1]
+    for fn, locations, encodings, _, confidences in files:
+        has_new_face = False
+        for face, loc in zip(encodings, locations):
+            distances = face_lib.distance(before_faces, face)
+            min_distance = min(distances)
+            index = distances.tolist().index(min_distance)
+            loc_dis = sum([abs(p1[0]-p2[0]) + abs(p1[1]-p2[1])
+                           for p1, p2 in zip(loc, before_locs[index])])
+            print('--> ', index, min_distance, loc_dis)
+            if min_distance > 0.5:
+                print('new face: ', min_distance, index)
+                has_new_face = True
+
+        print(fn, locations, confidences)
+        before_locs = locations
+        before_faces = encodings
 
 
 def show_image(image, locations, annotate, wait=0):
