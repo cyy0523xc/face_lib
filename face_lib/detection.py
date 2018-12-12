@@ -34,11 +34,6 @@ predictor = dlib.shape_predictor(predictor_68_point_model_location())
 face_encoder = dlib.face_recognition_model_v1(face_recognition_model_location())
 
 
-def imread(path):
-    """读取image对象"""
-    return cv2.imread(path)
-
-
 def set_cnn_model(model_path: str = None):
     global cnn_detector
     if model_path == None:
@@ -134,3 +129,8 @@ def distance(face_encodings, face_to_compare):
 def format_dlib_rect(rect):
     (left, top), (right, bottom) = rect
     return dlib.rectangle(left, top, right, bottom)
+
+
+def format_out_rect(rects):
+    return [((min(x1, x2), min(y1, y2)), (max(x1, x2), max(y1, y2)))
+            for (x1, y1), (x2, y2) in rects]
