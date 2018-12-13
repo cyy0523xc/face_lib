@@ -63,13 +63,13 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
         img: 图片对象
         model: 支持的识别算法: hog, cnn, haar, dnn
     Returns:
-        [[(left, top), (right, bottom)]]: 每个人脸的左上角坐标和右下角坐标
+        [(left, top, right, bottom)]: 每个人脸的左上角坐标和右下角坐标
         [confidence]: 每个人脸的置信度，注意该参数对于cnn和dnn才有意义
     see: https://www.learnopencv.com/face-detection-opencv-dlib-and-deep-learning-c-python/
     """
     if model == 'hog':
         rects = hog_detector(img, number_of_times_to_upsample)
-        rects = [[(r.left(), r.top()), (r.right(), r.bottom())]
+        rects = [(r.left(), r.top(), r.right(), r.bottom())
                  for r in rects]
         return rects, [1]*len(rects)
 
@@ -77,15 +77,14 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
         if cnn_detector is None:
             set_cnn_model()
         tmp_rects = cnn_detector(img, number_of_times_to_upsample)
-        rects = [[(r.rect.left(), r.rect.top()),
-                  (r.rect.right(), r.rect.bottom())]
+        rects = [(r.rect.left(), r.rect.top(), r.rect.right(), r.rect.bottom())
                  for r in tmp_rects]
         confidences = [r.confidence for r in tmp_rects]
         return rects, confidences
 
     elif model == 'haar':
         rects = haar_detector.detectMultiScale(img)
-        rects = [[(x1, y1), (x1+w, y1+h)] for x1, y1, w, h in rects]
+        rects = [(x1, y1, x1+w, y1+h) for x1, y1, w, h in rects]
         return rects, [1]*len(rects)
 
     # 默认使用dnn
@@ -107,7 +106,7 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
         top = int(detections[0, 0, i, 4] * rows)
         right = int(detections[0, 0, i, 5] * cols)
         bottom = int(detections[0, 0, i, 6] * rows)
-        rects.append([(left, top), (right, bottom)])
+        rects.append((left, top, right, bottom))
         confidences.append(confidence)
 
     return rects, confidences
@@ -127,10 +126,10 @@ def distance(face_encodings, face_to_compare):
 
 
 def format_dlib_rect(rect):
-    (left, top), (right, bottom) = rect
+    left, top, right, bottom = rect
     return dlib.rectangle(left, top, right, bottom)
 
 
 def format_out_rect(rects):
-    return [((min(x1, x2), min(y1, y2)), (max(x1, x2), max(y1, y2)))
-            for (x1, y1), (x2, y2) in rects]
+    return [(min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
+            for x1, y1, x2, y2 in rects]
