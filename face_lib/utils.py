@@ -32,7 +32,6 @@ def IoU(box1, box2):
     top = max(top1, top2)
     right = min(right1, right2)
     bottom = min(bottom1, bottom2)
-    print(left, top, right, bottom)
     if right-left <= 0 or bottom-top <= 0:
         return 0
 
