@@ -7,8 +7,8 @@ from setuptools import setup
 
 requirements = [
     'numpy',
-    'dlib',
-    'opencv-python',
+    # 'dlib',
+    # 'opencv-python',
 ]
 
 test_requirements = [
@@ -16,7 +16,7 @@ test_requirements = [
 
 setup(
     name='face_lib',
-    version='0.1.3',
+    version='0.1.4',
     description="Simple to use face detection and recognition.",
     long_description="Simple to use face detection and recognition.",
     author="Alex Cai",
