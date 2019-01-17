@@ -5,9 +5,6 @@
 # Created Time: 2018年12月09日 星期日 20时02分24秒
 from setuptools import setup
 
-with open('README.md') as readme_file:
-    readme = readme_file.read()
-
 requirements = [
     'numpy',
     'dlib',
@@ -21,7 +18,7 @@ setup(
     name='face_lib',
     version='0.1.3',
     description="Simple to use face detection and recognition.",
-    long_description=readme,
+    long_description="Simple to use face detection and recognition.",
     author="Alex Cai",
     author_email='cyy0523xc@gmail.com',
     url='https://github.com/cyy0523xc/face_lib',
