@@ -5,6 +5,7 @@
 # Created Time: 2018年12月09日 星期日 20时02分24秒
 from setuptools import setup
 
+# 注意：dlib and opencv 可能会分为cpu和gpu版，避免在这里被重装
 requirements = [
     'numpy',
     # 'dlib',
