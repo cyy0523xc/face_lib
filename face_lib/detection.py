@@ -34,6 +34,10 @@ predictor = dlib.shape_predictor(predictor_68_point_model_location())
 face_encoder = dlib.face_recognition_model_v1(face_recognition_model_location())
 
 
+def set_threshold(threshold):
+    conf.threshold = threshold
+
+
 def set_cnn_model(model_path: str = None):
     global cnn_detector
     if model_path == None:
@@ -110,6 +114,11 @@ def detect(img, model='dnn', number_of_times_to_upsample=1):
         confidences.append(confidence)
 
     return rects, confidences
+
+
+def landmarks(img, rects):
+    rects = [format_dlib_rect(rect) for rect in rects]
+    return [predictor(img, rect) for rect in rects]
 
 
 def encode(img, rects, num_jitters=1):
