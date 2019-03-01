@@ -6,11 +6,25 @@
 import face_lib
 import cv2
 
-model = 'cnn'
+model = 'haar'
 face_lib.set_threshold(0.4)
 
 
 def encodings(path):
+    """
+    鼻尖 30
+    鼻根 27
+    下巴 8
+    左眼外角 36
+    左眼内角 39
+    右眼外角 45
+    右眼内角 42
+    嘴中心   66
+    嘴左角   48
+    嘴右角   54
+    左脸最外 0
+    右脸最外 16
+    """
     image = face_lib.imread(path)
     rects = face_lib.detect(image, model=model)
     shapes = face_lib.landmarks(image, rects[0])
@@ -21,15 +35,16 @@ def encodings(path):
             pt_pos = (pt.x, pt.y)
             cv2.circle(image, pt_pos, 1, (255, 0, 0), 1)
 
-    cv2.namedWindow(path, cv2.WINDOW_AUTOSIZE)
-    cv2.imshow(path, image)
-    cv2.waitKey(0)
+    return image
 
 
 if __name__ == '__main__':
+    import os
     import sys
     from imutils.paths import list_images
     path = sys.argv[1]
+    save_path = sys.argv[2]
     print(model)
-    for ip in list_images(path):
-        encodings(ip)
+    for index, ip in enumerate(list_images(path)):
+        image = encodings(ip)
+        cv2.imwrite(os.path.join(save_path, '%s_%d.png' % (model, index)), image)
