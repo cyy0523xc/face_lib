@@ -6,7 +6,7 @@
 import face_lib
 import cv2
 
-model = 'haar'
+model = 'cnn'
 face_lib.set_threshold(0.4)
 
 
@@ -29,9 +29,13 @@ def encodings(path):
     rects = face_lib.detect(image, model=model)
     shapes = face_lib.landmarks(image, rects[0])
     for i, shape in zip(range(len(shapes)), shapes):
-        print("%s %d: %d" % (path, i, shape.num_parts))
+        conf = rects[1][i]
+        loc = rects[0][i]
+        x, y, xb, yb = loc
+        cv2.rectangle(image, (x, y), (xb, yb), (0, 0, 255), thickness=1)
+        cv2.putText(image, str(conf)[:6], (x+5, y-5),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (128, 255, 0), 2)
         for index, pt in enumerate(shape.parts()):
-            # print('Part {}: {}'.format(index, pt))
             pt_pos = (pt.x, pt.y)
             cv2.circle(image, pt_pos, 1, (255, 0, 0), 1)
 
@@ -46,5 +50,7 @@ if __name__ == '__main__':
     save_path = sys.argv[2]
     print(model)
     for index, ip in enumerate(list_images(path)):
+        print("path: ", ip)
         image = encodings(ip)
-        cv2.imwrite(os.path.join(save_path, '%s_%d.png' % (model, index)), image)
+        ip = ip.split('/')
+        cv2.imwrite(os.path.join(save_path, '%s_%s' % (model, ip[-1])), image)
