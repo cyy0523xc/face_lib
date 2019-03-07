@@ -33,8 +33,8 @@ def encodings(path):
         loc = rects[0][i]
         x, y, xb, yb = loc
         cv2.rectangle(image, (x, y), (xb, yb), (0, 0, 255), thickness=1)
-        cv2.putText(image, str(conf)[:6], (x+5, y-5),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (128, 255, 0), 2)
+        cv2.putText(image, str(conf)[:4], (x, y-5),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (128, 255, 0), 1)
         for index, pt in enumerate(shape.parts()):
             pt_pos = (pt.x, pt.y)
             cv2.circle(image, pt_pos, 1, (255, 0, 0), 1)
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     save_path = sys.argv[2]
     print(model)
     for index, ip in enumerate(list_images(path)):
-        print("path: ", ip)
+        print("%03d: path: " % index, ip)
         image = encodings(ip)
         ip = ip.split('/')
         cv2.imwrite(os.path.join(save_path, '%s_%s' % (model, ip[-1])), image)
